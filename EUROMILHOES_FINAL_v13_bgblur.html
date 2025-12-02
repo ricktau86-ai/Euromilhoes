@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gestor Euromilhões — v22 (mensal bloqueado + resumo & gráficos)</title>
+
+  <!-- Tailwind + Chart.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Firebase (Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+  <script>
+    // Configuração Firebase do teu projeto Euromilhões
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCS3qaRg6wy--iQss9nsf2f5wWB1cVUHY",
+      authDomain: "euromilhoes-a8b06.firebaseapp.com",
+      projectId: "euromilhoes-a8b06",
+      storageBucket: "euromilhoes-a8b06.firebasestorage.app",
+      messagingSenderId: "794636623916",
+      appId: "1:794636623916:web:c2a32ab0396aeb99d8f189",
+      measurementId: "G-7ETQVM5EMG"
+    };
+
+    // Inicializar Firebase em modo compat
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <style>
+    body {
+      background-color: #020617;
+      background-image: url("Imagem WhatsApp 2025-11-19 às 09.49.09_102ee46b.jpg");
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";
+    }
+    .nav-button { width:100%; display:flex; align-items:center; gap:.75rem; padding:.6rem .75rem; border-radius:.5rem; font-weight:600; transition:.2s; color:#cbd5e1; }
+    .nav-button:hover { background:#1e293b; color:#fff; }
+    .nav-button-active { background:#4f46e5; color:#fff; box-shadow:0 4px 14px rgba(79,70,229,.5); }
+    .nav-button-active:hover { background:#4338ca; }
+    .nav-button svg { width:1.25rem; height:1.25rem; opacity:.8 }
+    .nav-button-active svg { opacity:1 }
+    .toggle-bg{ position:relative; background:#4b5563; border:1px solid #6b7280; transition:background-color .2s; }
+    .toggle-bg::after{ content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:9999px; border:1px solid #d1d5db; transition: transform .2s; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+    input:checked + .toggle-bg{ background:#4f46e5; border-color:#4f46e5; }
+    input:checked + .toggle-bg::after{ transform: translateX(20px); }
+    .accordion-content { max-height:0; overflow:hidden; transition:max-height .25s ease; background:#0f172a; }
+    .accordion-header.active + .accordion-content { max-height: 3000px; }
+    .chevron { transition: transform .2s; }
+    .chevron.rotate-180 { transform: rotate(180deg); }
+    .form-input{ background:#1e293b; border:1px solid #334155; color:#e5e7eb; border-radius:6px; padding:.5rem .6rem; }
+    .form-input::placeholder{ color:#6b7280; }
+    .form-input:focus{ outline:none; border-color:#4f46e5; box-shadow:0 0 0 2px rgba(79,70,229,.5) }
+    .form-select{ background:#1e293b; border:1px solid #334155; color:#e5e7eb; border-radius:6px; padding:.5rem .6rem; }
+    .card{ background:rgba(15,23,42,.82); border:1px solid rgba(148,163,184,.45); border-radius:8px; box-shadow:0 16px 40px rgba(15,23,42,.9); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; font-weight:600; border-radius:8px; }
+    .btn-xs{ font-size:.75rem; padding:.25rem .5rem; }
+    .btn-sm{ font-size:.8rem; padding:.4rem .7rem; }
+    .btn-primary{ background:#4f46e5; color:#fff; }
+    .btn-primary:hover{ background:#4338ca; }
+    .btn-ghost{ background:#334155; color:#e5e7eb; }
+    .btn-ghost:hover{ background:#475569; }
+    .btn-danger{ background:#7f1d1d; color:#fff; }
+    .btn-danger:hover{ background:#991b1b; }
+    .icon-btn{ display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; background:#334155; color:#cbd5e1; }
+    .icon-btn:hover{ background:#475569; color:#fff; }
+    .pill{ font-size:.7rem; border-radius:999px; padding:.15rem .5rem; }
+    .pill-blue{ background:#1e3a8a; color:#bfdbfe; }
+    .pill-green{ background:#064e3b; color:#bbf7d0; }
+    .pill-red{ background:#7f1d1d; color:#fecaca; }
+    .grid-compact{ display:grid; grid-template-columns: 1fr 110px 140px 90px 60px; gap:.5rem; }
+    @media (max-width: 640px){ .grid-compact{ grid-template-columns: 1fr; } }
+    .status-dot{ width:10px;height:10px;border-radius:9999px;display:inline-block; }
+  </style>
+</head>
+<body class="text-gray-200">
+
+<header class="bg-slate-900 border-b border-indigo-500/30 shadow-lg">
+  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-indigo-400">Gestor da Sociedade Euromilhões</h1>
+      <p class="text-sm text-gray-400">Semanas únicas · até 2 sorteios por semana · <b>chave jogada por sorteio</b> · verificação de prémio · mensal bloqueia pagos.</p>
+    </div>
+    <div class="hidden md:flex text-3xl gap-2"><span>💶</span><span>⭐</span></div>
+  </div>
+</header>
+
+<div class="container mx-auto px-4 mt-3 text-center h-6">
+  <span id="statusMessage" class="hidden text-sm font-medium transition-all"></span>
+</div>
+
+<main class="container mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-5 gap-6">
+  <aside class="md:col-span-1">
+    <nav class="card p-3 space-y-1">
+      <p class="uppercase tracking-wide text-xs text-gray-500 mb-2 px-2">Menus</p>
+      <button class="nav-button nav-button-active" data-section-target="weeks"><span>🗓️</span><span>Apostas & Semanas</span></button>
+      <button class="nav-button" data-section-target="participants"><span>👥</span><span>Participantes</span></button>
+      <button class="nav-button" data-section-target="payments"><span>💳</span><span>Pagamentos</span></button>
+      <button class="nav-button" data-section-target="cash"><span>💼</span><span>Caixa & Prémios</span></button>
+      <button class="nav-button" data-section-target="charts"><span>📈</span><span>Gráficos</span></button>
+      <button class="nav-button" data-section-target="summary"><span>📊</span><span>Resumo</span></button>
+      <button class="nav-button" data-section-target="settings"><span>⚙️</span><span>Definições</span></button>
+    </nav>
+  </aside>
+
+  <!-- Apostas & Semanas -->
+  <section id="section-weeks" class="md:col-span-4 app-section space-y-5">
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Adicionar / Atualizar Semana</h2>
+      <form id="addWeekForm" class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Semana nº</label>
+          <input id="weekNumber" type="number" class="form-input mt-1 w-full" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Custo total da semana (€)</label>
+          <input id="weekCost" type="number" step="0.01" class="form-input mt-1 w-full" placeholder="ex: 5.00" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Prémio extra (€)</label>
+          <input id="weekWinnings" type="number" step="0.01" value="0" class="form-input mt-1 w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Data do sorteio</label>
+          <input id="weekDrawDate" type="date" class="form-input mt-1 w-full" />
+        </div>
+        <div class="sm:col-span-5">
+          <label class="block text-sm font-medium text-gray-400 mb-1">Chave jogada (opcional · atalho para novos sorteios)</label>
+          <div class="grid grid-cols-7 gap-2">
+            <input id="n1" type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" placeholder="N1" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="n2" type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" placeholder="N2" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="n3" type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" placeholder="N3" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="n4" type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" placeholder="N4" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="n5" type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" placeholder="N5" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="e1" type="number" min="1" max="12" inputmode="numeric" pattern="[0-9]*" placeholder="E1" class="form-input px-2 py-1 text-center text-sm" />
+            <input id="e2" type="number" min="1" max="12" inputmode="numeric" pattern="[0-9]*" placeholder="E2" class="form-input px-2 py-1 text-center text-sm" />
+          </div>
+          <p class="text-[11px] text-gray-500 mt-1">5 números (1–50) e 2 estrelas (1–12). <b>Sem repetidos</b>.</p>
+        </div>
+        <div class="sm:col-span-5">
+          <button class="w-full btn btn-primary">Adicionar/Atualizar</button>
+        </div>
+      </form>
+      <p class="text-[11px] text-gray-500 mt-3">Se já existir uma semana com o mesmo número, o formulário adiciona o <b>2º sorteio</b> (sem duplicar semanas). A chave da semana é copiada apenas como atalho.</p>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Semanas (agrupadas por número)</h2>
+      <div id="weeksList" class="space-y-3"></div>
+    </div>
+  </section>
+
+  <!-- Participantes -->
+  <section id="section-participants" class="md:col-span-4 app-section hidden">
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Gestão de Participantes</h2>
+      <form id="addParticipantForm" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="newParticipantName" class="form-input flex-grow" placeholder="Nome do participante" required />
+        <button class="btn btn-primary">Adicionar</button>
+      </form>
+
+      <div class="bg-slate-800 border border-slate-700 rounded-md p-3 mb-2">
+        <p class="text-xs text-gray-400">Define o valor padrão (€/semana). Usa o <b>Mensal</b> por mês para pagamentos automáticos.</p>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-sm text-gray-300">Padrão:</span>
+          <div class="flex">
+            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-700 bg-slate-700 text-gray-400 text-sm">€</span>
+            <input id="defaultContribution" type="number" step="0.01" class="form-input rounded-l-none w-28" placeholder="0.60">
+          </div>
+          <button id="saveDefaultContribution" class="btn btn-sm btn-ghost">Guardar padrão</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2" id="participantsList"></div>
+      <div class="text-[11px] text-gray-500 mt-3">
+        <p>O alternador <b>Mensal</b> aplica-se ao mês escolhido e marca automaticamente este participante como pago em todas as semanas com sorteios nesse mês (ficam bloqueados em “Apostas”).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pagamentos (Matriz Mensal) -->
+  <section id="section-payments" class="md:col-span-4 app-section hidden space-y-5">
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-2">Pagamentos Mensais</h2>
+      <p class="text-xs text-gray-400 mb-3">Marcar os meses pagos por participante. Afeta e <b>bloqueia</b> as semanas com sorteios nesse mês.</p>
+      <div class="overflow-auto" id="monthlyPaymentsTable"></div>
+    </div>
+  </section>
+
+  <!-- Caixa & Prémios -->
+  <section id="section-cash" class="md:col-span-4 app-section hidden space-y-5">
+    <div class="card p-5 text-center">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-2">Resumo da Caixa</h2>
+      <p class="text-xs text-gray-400">Saldo calculado (automático)</p>
+      <p id="cashBoxDisplay" class="text-4xl font-extrabold text-green-500 mt-1">€0,00</p>
+      <p class="text-[11px] text-gray-500 mt-2">Saldo inicial + contribuições + prémios (sorteios + extra) − custo das apostas.</p>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Contribuições pagas</p>
+        <p id="kpiContrib" class="text-2xl font-extrabold text-sky-400">€0.00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Saldo em caixa</p>
+        <p id="kpiCash" class="text-2xl font-extrabold text-emerald-400">€0.00</p>
+      </div>
+    </div>
+    <div class="card p-5">
+      <h3 class="text-lg font-semibold text-indigo-400 mb-3">Saldo inicial / Ajuste</h3>
+      <form id="setInitialCashBoxForm" class="space-y-2">
+        <label class="text-sm font-medium text-gray-400">Definir / ajustar saldo inicial (€)</label>
+        <div class="flex">
+          <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-700 bg-slate-700 text-gray-400 text-sm">€</span>
+          <input id="initialCashBox" type="number" step="0.01" class="form-input flex-grow rounded-l-none" placeholder="0.00" />
+          <button class="btn btn-primary rounded-l-none">Guardar</button>
+        </div>
+      </form>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Contribuições pagas</p>
+        <p id="kpiContrib" class="text-2xl font-extrabold text-sky-400">€0.00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Saldo em caixa</p>
+        <p id="kpiCash" class="text-2xl font-extrabold text-emerald-400">€0.00</p>
+      </div>
+    </div>
+    <div class="card p-5">
+      <h3 class="text-lg font-semibold text-indigo-400 mb-3">Prémios & Movimentos Manuais</h3>
+      <form id="extraMovementForm" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Tipo</label>
+          <select id="movementType" class="form-select mt-1 w-full text-sm">
+            <option value="premio">Prémio extra</option>
+            <option value="ajuste">Ajuste manual</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-400">Descrição</label>
+          <input id="movementDescription" class="form-input mt-1 w-full text-sm" placeholder="Ex.: prémio especial, correção" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400">Valor (€)</label>
+          <input id="movementAmount" type="number" step="0.01" class="form-input mt-1 w-full text-sm" required />
+        </div>
+        <div class="sm:col-span-4">
+          <button class="w-full btn btn-primary">Registar movimento</button>
+        </div>
+      </form>
+      <div id="extraMovementsList" class="divide-y divide-slate-700"></div>
+    </div>
+  </section>
+
+  <!-- Gráficos -->
+  <section id="section-charts" class="md:col-span-4 app-section hidden space-y-5">
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Gráficos Mensais</h2>
+      <div class="grid grid-cols-1 gap-6">
+        <div><canvas id="chartMonthlyTotals" height="120"></canvas></div>
+        <div><canvas id="chartCashEvolution" height="120"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resumo -->
+  <section id="section-summary" class="md:col-span-4 app-section hidden space-y-5">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Semanas</p>
+        <p id="kpiWeeks" class="text-2xl font-extrabold text-indigo-400">0</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Custo total</p>
+        <p id="kpiCost" class="text-2xl font-extrabold text-rose-400">€0,00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Prémios totais</p>
+        <p id="kpiWinnings" class="text-2xl font-extrabold text-emerald-400">€0,00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Contribuições pagas</p>
+        <p id="kpiContrib" class="text-2xl font-extrabold text-sky-400">€0.00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Saldo em caixa</p>
+        <p id="kpiCash" class="text-2xl font-extrabold text-emerald-400">€0.00</p>
+      </div>
+    </div>
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Totais por Mês</h2>
+      <div id="monthlyTable" class="overflow-auto"></div>
+    </div>
+  </section>
+
+  <!-- Definições -->
+  <section id="section-settings" class="md:col-span-4 app-section hidden space-y-5">
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-4">Definições</h2>
+      <form id="settingsForm" class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-400">Valor total da aposta semanal (€)</label>
+          <div class="flex mt-1">
+            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-slate-700 bg-slate-700 text-gray-400 text-sm">€</span>
+            <input id="ticketCost" type="number" step="0.01" class="form-input flex-grow rounded-l-none" placeholder="5.00" />
+          </div>
+        </div>
+        <button class="btn btn-primary">Guardar definições</button>
+      </form>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Contribuições pagas</p>
+        <p id="kpiContrib" class="text-2xl font-extrabold text-sky-400">€0.00</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="text-xs text-gray-400">Saldo em caixa</p>
+        <p id="kpiCash" class="text-2xl font-extrabold text-emerald-400">€0.00</p>
+      </div>
+    </div>
+    <div class="card p-5">
+      <h2 class="text-xl font-semibold text-indigo-400 mb-3">Importar / Exportar</h2>
+      <div class="space-y-3">
+        <button id="exportButton" class="w-full btn btn-ghost">Exportar backup (JSON)</button>
+        <label class="w-full bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-md font-medium text-sm cursor-pointer text-center block transition-colors">
+          Importar backup (JSON)
+          <input id="importFile" type="file" class="hidden" accept=".json,application/json" />
+        </label>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+
+  const sections=document.querySelectorAll('.app-section');
+  const navButtons=document.querySelectorAll('[data-section-target]');
+  const statusMessage=document.getElementById('statusMessage');
+
+  // Forms & elementos
+  const participantsListEl=document.getElementById('participantsList');
+  const addParticipantForm=document.getElementById('addParticipantForm');
+  const newParticipantNameInput=document.getElementById('newParticipantName');
+  const defaultContributionInput=document.getElementById('defaultContribution');
+  const saveDefaultContributionBtn=document.getElementById('saveDefaultContribution');
+
+  const addWeekForm=document.getElementById('addWeekForm');
+  const weekNumberInput=document.getElementById('weekNumber');
+  const weekCostInput=document.getElementById('weekCost');
+  const weekWinningsInput=document.getElementById('weekWinnings');
+  const weekDrawDateInput=document.getElementById('weekDrawDate');
+  const weeksListEl=document.getElementById('weeksList');
+
+  const monthlyPaymentsTableEl=document.getElementById('monthlyPaymentsTable');
+
+  const cashBoxDisplayEl=document.getElementById('cashBoxDisplay');
+  const setInitialCashBoxForm=document.getElementById('setInitialCashBoxForm');
+  const initialCashBoxInput=document.getElementById('initialCashBox');
+  const extraMovementForm=document.getElementById('extraMovementForm');
+  const movementTypeInput=document.getElementById('movementType');
+  const movementDescriptionInput=document.getElementById('movementDescription');
+  const movementAmountInput=document.getElementById('movementAmount');
+  const extraMovementsListEl=document.getElementById('extraMovementsList');
+
+  const settingsForm=document.getElementById('settingsForm');
+  const ticketCostInput=document.getElementById('ticketCost');
+  const exportButton=document.getElementById('exportButton');
+  const importFileInput=document.getElementById('importFile');
+
+  const kpiWeeksEl=document.getElementById('kpiWeeks');
+  const kpiCostEl=document.getElementById('kpiCost');
+  const kpiWinningsEl=document.getElementById('kpiWinnings');
+  const monthlyTableEl=document.getElementById('monthlyTable');
+
+  // charts
+  let chartMonthlyTotals=null;
+  let chartCashEvolution=null;
+
+  // --- Firebase: coleção remota ---
+  const FIREBASE_COLLECTION = 'euromilhoes_v22';
+
+  let localParticipants=[],localWeeks=[],localSummary={};
+  let openWeekIds=new Set();
+
+  async function loadFirebaseDoc(docId, defaultValue){
+    try{
+      const snap = await db.collection(FIREBASE_COLLECTION).doc(docId).get();
+      if(!snap.exists) return defaultValue;
+      const data = snap.data() || {};
+      if (Array.isArray(data.items)) return data.items;
+      return data;
+    }catch(err){
+      console.error('Erro a ler doc', docId, err);
+      showStatus('Erro a ligar ao Firebase (ler '+docId+'). Ver consola.', true);
+      return defaultValue;
+    }
+  }
+
+  async function saveFirebaseDoc(docId, value){
+    try{
+      const payload = Array.isArray(value) ? { items: value } : value;
+      await db.collection(FIREBASE_COLLECTION).doc(docId).set(payload);
+    }catch(err){
+      console.error('Erro a gravar doc', docId, err);
+      showStatus('Erro a gravar no Firebase ('+docId+'). Ver consola.', true);
+    }
+  }
+
+  async function saveAll(){
+    await Promise.all([
+      saveFirebaseDoc('participants', localParticipants),
+      saveFirebaseDoc('weeks', localWeeks),
+      saveFirebaseDoc('summary', localSummary)
+    ]);
+  }
+
+  function showStatus(msg,error=false){
+    statusMessage.textContent=msg;
+    statusMessage.classList.remove('hidden','text-green-400','text-red-400');
+    statusMessage.classList.add(error?'text-red-400':'text-green-400');
+    setTimeout(()=>statusMessage.classList.add('hidden'),2600);
+  }
+
+  // Helper meses
+  function monthKeyFromDateStr(str){
+    if(!str)return null;
+    const d=new Date(str);
+    if(isNaN(d.getTime()))return null;
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  }
+  function monthLabel(mk){
+    const [y,m]=mk.split('-');
+    return String(m).padStart(2,'0')+'/'+y;
+  }
+  function monthsInData(){
+    const set=new Set();
+    localWeeks.forEach(w=>(w.data.draws||[]).forEach(dr=>{
+      const mk=monthKeyFromDateStr(dr.date);
+      if(mk) set.add(mk);
+    }));
+    if(set.size===0){
+      const now=new Date();
+      const year=now.getFullYear();
+      for(let m=1;m<=12;m++) set.add(year+'-'+String(m).padStart(2,'0'));
+    }
+    return [...set].sort();
+  }
+
+  // Verificação de prémios
+  function isPrize(mainHits, starHits){
+    const set=new Set(['5-2','5-1','5-0','4-2','4-1','3-2','4-0','2-2','3-1','3-0','1-2','2-1','2-0']);
+    return set.has(`${mainHits}-${starHits}`);
+  }
+  function tierNumber(mainHits, starHits){
+    const map={'5-2':1,'5-1':2,'5-0':3,'4-2':4,'4-1':5,'3-2':6,'4-0':7,'2-2':8,'3-1':9,'3-0':10,'1-2':11,'2-1':12,'2-0':13};
+    return map[`${mainHits}-${starHits}`]||null;
+  }
+  function isCompleteKey(obj){
+    return Array.isArray(obj?.main)&&obj.main.length===5&&Array.isArray(obj?.stars)&&obj.stars.length===2;
+  }
+
+  async function initLoad(){
+    // Participants + Summary
+    localParticipants = await loadFirebaseDoc('participants', []);
+    const s = await loadFirebaseDoc('summary', {});
+    localSummary={
+      initialCashBox: typeof s.initialCashBox==='number'?s.initialCashBox:0,
+      ticketCost: typeof s.ticketCost==='number'?s.ticketCost:5,
+      defaultContribution: typeof s.defaultContribution==='number'?s.defaultContribution:0.60,
+      extraMovements: Array.isArray(s.extraMovements)?s.extraMovements:[],
+      monthlyPayments: (typeof s.monthlyPayments==='object' && s.monthlyPayments!==null)? s.monthlyPayments : {}
+    };
+
+    if(localParticipants.length===0){
+      localParticipants=['Madalena','Rute','Pedro','João','Ricardo','Ana','Tiago','Sofia','Mariana']
+        .map(n=>({id:crypto.randomUUID(),name:n,rate:localSummary.defaultContribution}));
+    }else{
+      localParticipants=localParticipants.map(p=>({
+        ...p,
+        rate:(typeof p.rate==='number'?p.rate:localSummary.defaultContribution)
+      }));
+    }
+
+    // Weeks + migração
+    const raw = await loadFirebaseDoc('weeks', []);
+    const migrated=(raw||[]).map(w=>{
+      const d=w.data||{};
+      let draws=d.draws;
+      if(!Array.isArray(draws)){
+        draws=[];
+        if(d.drawDate){
+          draws.push({
+            date:d.drawDate,
+            drawnNumbers:{main:(d.drawnNumbers?.main||[]), stars:(d.drawnNumbers?.stars||[])},
+            playedNumbers:{ main:[...(d.numbers?.main||[])], stars:[...(d.numbers?.stars||[]) ] },
+            prize:0
+          });
+        }
+      }
+      draws = draws.map(dr=>{
+        const played = dr.playedNumbers && Array.isArray(dr.playedNumbers.main) && Array.isArray(dr.playedNumbers.stars)
+          ? dr.playedNumbers
+          : { main:[...(d.numbers?.main||[])], stars:[...(d.numbers?.stars||[]) ] };
+        const prize = typeof dr.prize==='number' ? dr.prize : 0;
+        return {
+          date:dr.date||'',
+          drawnNumbers:{ main:[...(dr.drawnNumbers?.main||[])], stars:[...(dr.drawnNumbers?.stars||[]) ] },
+          playedNumbers: played,
+          prize
+        };
+      });
+      return {
+        id: w.id || crypto.randomUUID(),
+        data:{
+          weekNumber: d.weekNumber||0,
+          cost: typeof d.cost==='number'? d.cost : 0,
+          winnings: typeof d.winnings==='number'? d.winnings : 0,
+          numbers:{
+            main: Array.isArray(d.numbers?.main)? d.numbers.main : [],
+            stars: Array.isArray(d.numbers?.stars)? d.numbers.stars : []
+          },
+          draws,
+          payments: d.payments||{},
+          surplusConfirmed: !!d.surplusConfirmed
+        }
+      };
+    });
+
+    // Unir semanas com mesmo nº
+    const byWeek=new Map();
+    for(const w of migrated){
+      const num=w.data.weekNumber;
+      if(!byWeek.has(num)){ byWeek.set(num,w); }
+      else{
+        const base=byWeek.get(num);
+        base.data.winnings=(base.data.winnings||0)+(w.data.winnings||0);
+        if((base.data.numbers?.main||[]).length===0 && (w.data.numbers?.main||[]).length>0){
+          base.data.numbers={...w.data.numbers};
+        }
+        base.data.payments=base.data.payments||{};
+        Object.keys(w.data.payments||{}).forEach(pid=>{
+          base.data.payments[pid]=!!(base.data.payments[pid]||w.data.payments[pid]);
+        });
+        base.data.draws=Array.isArray(base.data.draws)?base.data.draws:[];
+        (w.data.draws||[]).forEach(dr=>{
+          if(base.data.draws.length<2) base.data.draws.push(dr);
+        });
+        base.data.surplusConfirmed=!!(base.data.surplusConfirmed||w.data.surplusConfirmed);
+      }
+    }
+    localWeeks=[...byWeek.values()];
+
+    // Inputs iniciais
+    initialCashBoxInput.value=localSummary.initialCashBox.toFixed(2);
+    ticketCostInput.value=localSummary.ticketCost.toFixed(2);
+    if(!weekCostInput.value) weekCostInput.value=localSummary.ticketCost.toFixed(2);
+    defaultContributionInput.value=localSummary.defaultContribution.toFixed(2);
+
+    await saveAll(); // garante que a estrutura mínima existe no Firestore
+  }
+
+  // Aggregations
+  function monthlyTotals(){
+    const months=monthsInData();
+    const byMonth={};
+    months.forEach(mk=>byMonth[mk]={cost:0,winnings:0,contributions:0});
+
+    let tCost=0,tWin=0,tContrib=0;
+
+    localWeeks.forEach(w=>{
+      const d=w.data||{};
+      const weekMonths=new Set((d.draws||[]).map(dr=>monthKeyFromDateStr(dr.date)).filter(Boolean));
+      const mkForCost = weekMonths.size ? [...weekMonths][0] : months[0];
+
+      byMonth[mkForCost].cost += (d.cost||0);
+      tCost += (d.cost||0);
+
+      (d.draws||[]).forEach(dr=>{
+        const mk=monthKeyFromDateStr(dr.date)||mkForCost;
+        byMonth[mk].winnings += (dr.prize||0);
+        tWin += (dr.prize||0);
+      });
+      byMonth[mkForCost].winnings += (d.winnings||0);
+      tWin += (d.winnings||0);
+
+      localParticipants.forEach(p=>{
+        const rate=(typeof p.rate==='number'?p.rate:localSummary.defaultContribution);
+        const weeklyPaid = !!(d.payments && d.payments[p.id]);
+        const monthlyPaid = [...weekMonths].some(mk=>localSummary.monthlyPayments?.[mk]?.[p.id]);
+        const paid = weeklyPaid || monthlyPaid;
+        if(paid){
+          byMonth[mkForCost].contributions += rate;
+          tContrib += rate;
+        }
+      });
+    });
+
+    return { months, byMonth, totals:{cost:tCost, winnings:tWin, contributions:tContrib} };
+  }
+
+  function calcCash(){
+    const { totals } = monthlyTotals();
+    const extra=(localSummary.extraMovements||[]).reduce((s,m)=>s+(m.amount||0),0);
+    return (localSummary.initialCashBox||0) + totals.contributions + totals.winnings - totals.cost + extra;
+  }
+
+  // Renders
+  function renderCash(){
+    const cash=calcCash();
+    cashBoxDisplayEl.textContent='€'+cash.toFixed(2);
+    cashBoxDisplayEl.className='text-4xl font-extrabold '+(cash>=0?'text-green-500':'text-red-500');
+    const kpiCashEl = document.getElementById('kpiCash');
+    if(kpiCashEl){ kpiCashEl.textContent = '€' + cash.toFixed(2); }
+  }
+
+  function renderMonthlyPayments(){
+    const months = monthsInData();
+    let html = '<table class="min-w-full text-sm"><thead><tr><th class="text-left p-2">Participante</th>';
+    months.forEach(mk => html += `<th class="p-2 text-center">${monthLabel(mk)}</th>`);
+    html += '</tr></thead><tbody>';
+    localParticipants.forEach(p => {
+      html += `<tr class="border-t border-slate-700"><td class="p-2">${p.name}</td>`;
+      months.forEach(mk => {
+        const checked = !!(localSummary.monthlyPayments?.[mk]?.[p.id]);
+        html += `<td class="p-2 text-center"><input type="checkbox" class="mp-check" data-part="${p.id}" data-month="${mk}" ${checked?'checked':''}></td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    monthlyPaymentsTableEl.innerHTML = html;
+  }
+
+  function renderSummary(){
+    const { months, byMonth, totals } = monthlyTotals();
+    kpiWeeksEl.textContent = localWeeks.length.toString();
+    kpiCostEl.textContent = '€' + (totals.cost||0).toFixed(2);
+    kpiWinningsEl.textContent = '€' + (totals.winnings||0).toFixed(2);
+
+    const contribVal = months.reduce((s,mk)=>s + ((byMonth[mk]?.contributions)||0), 0);
+    const cashVal = calcCash();
+    const kpiContribEl = document.getElementById('kpiContrib');
+    const kpiCashEl = document.getElementById('kpiCash');
+    if(kpiContribEl) kpiContribEl.textContent = '€' + contribVal.toFixed(2);
+    if(kpiCashEl) kpiCashEl.textContent = '€' + cashVal.toFixed(2);
+
+    let html = '<table class="min-w-full text-sm"><thead><tr><th class="text-left p-2">Mês</th><th class="text-right p-2">Contribuições</th><th class="text-right p-2">Custo</th><th class="text-right p-2">Prémios</th><th class="text-right p-2">Saldo mensal</th></tr></thead><tbody>';
+    months.forEach(mk => {
+      const m = byMonth[mk] || {cost:0,winnings:0,contributions:0};
+      const sal = (m.contributions||0) + (m.winnings||0) - (m.cost||0);
+      html += `<tr class="border-t border-slate-700">
+        <td class="p-2">${monthLabel(mk)}</td>
+        <td class="p-2 text-right">€${(m.contributions||0).toFixed(2)}</td>
+        <td class="p-2 text-right text-rose-300">€${(m.cost||0).toFixed(2)}</td>
+        <td class="p-2 text-right text-emerald-300">€${(m.winnings||0).toFixed(2)}</td>
+        <td class="p-2 text-right ${sal>=0?'text-emerald-400':'text-rose-400'}">€${sal.toFixed(2)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    monthlyTableEl.innerHTML = html;
+  }
+
+  function renderCharts(){
+    const ctx1 = document.getElementById('chartMonthlyTotals').getContext('2d');
+    const ctx2 = document.getElementById('chartCashEvolution').getContext('2d');
+    const { months, byMonth } = monthlyTotals();
+    const labels = months.map(monthLabel);
+    const contrib = months.map(mk => (byMonth[mk]?.contributions||0));
+    const cost = months.map(mk => (byMonth[mk]?.cost||0));
+    const win = months.map(mk => (byMonth[mk]?.winnings||0));
+
+    if(chartMonthlyTotals) chartMonthlyTotals.destroy();
+    chartMonthlyTotals = new Chart(ctx1, {
+      type: 'bar',
+      data: { labels, datasets: [
+        { label: 'Contribuições', data: contrib },
+        { label: 'Custos', data: cost },
+        { label: 'Prémios', data: win }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false, plugins:{ legend:{ labels:{ color:'#cbd5e1' } }}, scales:{ x:{ ticks:{ color:'#94a3b8' } }, y:{ ticks:{ color:'#94a3b8' } } } }
+    });
+
+    const cashSeq = [];
+    let acc = (localSummary.initialCashBox||0);
+    for(let i=0;i<labels.length;i++){
+      acc += (contrib[i]||0) + (win[i]||0) - (cost[i]||0);
+      cashSeq.push(acc);
+    }
+    if(chartCashEvolution) chartCashEvolution.destroy();
+    chartCashEvolution = new Chart(ctx2, {
+      type: 'line',
+      data: { labels, datasets:[ { label:'Saldo acumulado', data: cashSeq, tension:.25 } ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins:{ legend:{ labels:{ color:'#cbd5e1' } }}, scales:{ x:{ ticks:{ color:'#94a3b8' } }, y:{ ticks:{ color:'#94a3b8' } } } }
+    });
+  }
+
+  function renderParticipants(){
+    participantsListEl.innerHTML='';
+    if(localParticipants.length===0){
+      participantsListEl.innerHTML='<p class="text-gray-500 text-sm">Nenhum participante.</p>'; 
+      return;
+    }
+    const now=new Date(); 
+    const defM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    localParticipants.forEach(p=>{
+      const row=document.createElement('div');
+      row.className='grid-compact items-center bg-slate-800 border border-slate-700 rounded-md px-3 py-2';
+      row.innerHTML=`
+        <div class="flex items-center gap-2"><span class="font-medium text-gray-200">${p.name}</span></div>
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-gray-400 mr-1">€/sem:</span>
+          <div class="flex">
+            <span class="inline-flex items-center px-2 rounded-l-md border border-r-0 border-slate-700 bg-slate-700 text-gray-400 text-xs">€</span>
+            <input data-id="${p.id}" type="number" step="0.01" class="form-input rate-input rounded-l-none w-20 text-sm" value="${(typeof p.rate==='number'?p.rate:localSummary.defaultContribution).toFixed(2)}">
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400">Mês:</span>
+          <input type="month" class="form-input month-input w-36 text-sm" id="month_for_${p.id}" value="${defM}">
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="flex items-center gap-2 text-xs">
+            <span class="text-gray-400">Mensal</span>
+            <div class="relative">
+              <input type="checkbox" class="sr-only participant-monthly-toggle" data-participant-id="${p.id}" data-month-input-id="month_for_${p.id}">
+              <div class="toggle-bg h-6 w-11 rounded-full"></div>
+            </div>
+          </label>
+        </div>
+        <div class="text-right">
+          <button data-id="${p.id}" class="delete-participant text-red-400 hover:text-red-300 text-xs font-medium">Remover</button>
+        </div>`;
+      participantsListEl.appendChild(row);
+    });
+  }
+
+  function renderWeeks(){
+    weeksListEl.innerHTML='';
+    if(localWeeks.length===0){
+      weeksListEl.innerHTML='<p class="text-gray-500 text-sm">Ainda não existem semanas.</p>'; 
+      return;
+    }
+    const sorted=[...localWeeks].sort((a,b)=>b.data.weekNumber-a.data.weekNumber);
+    sorted.forEach(week=>{
+      const id=week.id, d=week.data||{};
+      d.payments=d.payments||{};
+      localParticipants.forEach(p=>{ if(typeof d.payments[p.id]!=='boolean') d.payments[p.id]=false; });
+
+      const weekMonths=new Set((d.draws||[]).map(dr=>monthKeyFromDateStr(dr.date)).filter(Boolean));
+
+      let sumAll=0,sumPaid=0,sumUnpaid=0;
+      localParticipants.forEach(p=>{
+        const rate=(typeof p.rate==='number'?p.rate:localSummary.defaultContribution);
+        sumAll+=rate;
+        const weeklyPaid=!!d.payments[p.id];
+        const monthlyPaid=[...weekMonths].some(mk=>localSummary.monthlyPayments?.[mk]?.[p.id]);
+        const paid=weeklyPaid||monthlyPaid;
+        if(paid) sumPaid+=rate; else sumUnpaid+=rate;
+      });
+
+      const cost=d.cost||0;
+      const weekDrawPrizes=(d.draws||[]).reduce((s,dr)=>s+(dr.prize||0),0);
+      const winningsExtra=d.winnings||0;
+      const totalWeekWinnings=weekDrawPrizes+winningsExtra;
+      const weekProfit=sumPaid+totalWeekWinnings-cost;
+
+      const draws=Array.isArray(d.draws)? d.draws.slice(0,2) : [];
+      const allDrawsHaveDrawn = draws.length>0 && draws.every(dr=>isCompleteKey(dr.drawnNumbers||{main:[],stars:[]}));
+      const allDrawsHavePlayed = draws.length>0 && draws.every(dr=>isCompleteKey(dr.playedNumbers||{main:[],stars:[]}));
+      let statusColor='bg-red-500', statusTitle='Faltam dados (pagamentos, chaves ou sorteios)';
+      if(sumPaid===sumAll && allDrawsHavePlayed && !allDrawsHaveDrawn){ statusColor='bg-yellow-400'; statusTitle='Falta introduzir a chave sorteada'; }
+      if(sumPaid===sumAll && allDrawsHavePlayed && allDrawsHaveDrawn){ statusColor='bg-green-500'; statusTitle='Tudo preenchido'; }
+
+      const container=document.createElement('div');
+      container.className='border border-slate-700 rounded-md bg-slate-800';
+      container.dataset.weekId=id;
+
+      container.innerHTML=`
+        <div class="accordion-header px-4 py-3 flex items-center justify-between cursor-pointer rounded-t-md hover:bg-slate-700/50">
+          <div>
+            <p class="font-semibold text-indigo-400">Semana ${d.weekNumber}</p>
+            <p class="text-xs text-gray-400">Aposta: €${cost.toFixed(2)} · Prémios semana: €${totalWeekWinnings.toFixed(2)} · ${draws.length?`Sorteios: ${draws.map(dr=>dr.date||'—').join(' / ')}`:'Sem data'}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="status-dot ${statusColor}" title="${statusTitle}"></span>
+            <span class="text-xs font-medium ${weekProfit>=0?'text-green-400':'text-red-400'}">${weekProfit>=0?'+':''}€${weekProfit.toFixed(2)}</span>
+            <svg class="w-5 h-5 text-gray-400 chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+          </div>
+        </div>
+
+        <div class="accordion-content px-4 pb-4 pt-3 border-t border-slate-700 rounded-b-md">
+          <!-- Chave da semana (atalho) -->
+          <div class="flex items-center gap-2 mb-2">
+            <p class="text-sm text-gray-300">
+              <span class="font-medium text-gray-400">Chave da semana (atalho):</span>
+              <span class="ml-1 font-mono text-gray-100">${Array.isArray(d.numbers?.main)&&d.numbers.main.length===5 && Array.isArray(d.numbers?.stars)&&d.numbers.stars.length===2 ? (d.numbers.main.join(' - ')+' ⭐ '+d.numbers.stars.join(' - ')):'—'}</span>
+            </p>
+            <button class="icon-btn edit-played" title="Editar chave da semana" data-week-id="${id}">✏️</button>
+          </div>
+          <div class="played-editor hidden mt-2" data-editor-for="${id}">
+            <p class="text-xs font-medium text-gray-400 mb-1">Editar chave da semana (podes depois replicar para cada sorteio)</p>
+            <div class="grid grid-cols-7 gap-2">
+              ${[0,1,2,3,4].map(i=>`<input type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs played-input" data-week-id="${id}" data-type="main" data-index="${i}" value="${d.numbers.main?.[i] ?? ''}" placeholder="N${i+1}">`).join('')}
+              ${[0,1].map(i=>`<input type="number" min="1" max="12" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs played-input" data-week-id="${id}" data-type="star" data-index="${i}" value="${d.numbers.stars?.[i] ?? ''}" placeholder="E${i+1}">`).join('')}
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button class="btn btn-xs btn-primary save-played" data-week-id="${id}">Guardar</button>
+              <button class="btn btn-xs btn-ghost cancel-played" data-week-id="${id}">Cancelar</button>
+              <button class="btn btn-xs btn-danger clear-played" data-week-id="${id}">Limpar</button>
+            </div>
+          </div>
+
+          <!-- Sorteios -->
+          <div class="mt-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs font-medium text-gray-400">Por sorteio: <b>chave jogada</b> + <b>chave sorteada</b> + <b>verificação</b></p>
+              ${draws.length<2?`<button class="btn btn-xs btn-ghost add-draw" data-week-id="${id}">+ Adicionar 2º sorteio</button>`:''}
+            </div>
+            <div class="space-y-3" data-draws-group="${id}">
+              ${draws.map((dr,idx)=>{
+                const dm=Array.isArray(dr.drawnNumbers?.main)?dr.drawnNumbers.main:[];
+                const ds=Array.isArray(dr.drawnNumbers?.stars)?dr.drawnNumbers.stars:[];
+                const pm=Array.isArray(dr.playedNumbers?.main)?dr.playedNumbers.main:[];
+                const ps=Array.isArray(dr.playedNumbers?.stars)?dr.playedNumbers.stars:[];
+
+                const haveDrawn = isCompleteKey({main:dm,stars:ds});
+                const havePlayed = isCompleteKey({main:pm,stars:ps});
+
+                let resultHTML = '<div class="mt-2 text-[11px] text-gray-500">Preenche a chave jogada <i>e</i> a chave sorteada para verificação de prémio.</div>';
+                if(haveDrawn && havePlayed){
+                  const pmSet=new Set(pm), psSet=new Set(ps);
+                  let mh=0, sh=0; dm.forEach(n=>{ if(pmSet.has(n)) mh++; }); ds.forEach(s=>{ if(psSet.has(s)) sh++; });
+                  const combo = `${mh}+${sh}`;
+                  const tier = tierNumber(mh,sh);
+                  const won = isPrize(mh,sh);
+                  resultHTML = `<div class="mt-2 text-sm">
+                    <span class="font-mono">Acertos: <b>${mh}</b> números + <b>${sh}</b> estrelas</span>
+                    ${tier ? `<span class="ml-2 text-xs text-gray-300"> · Escalão <b>#${tier}</b> (<b>${combo}</b>)</span>` : `<span class="ml-2 text-xs text-gray-400"> · (<b>${combo}</b>)</span>`}
+                    ${won ? `<span class="ml-2 pill pill-green">Com prémio</span>` : `<span class="ml-2 pill pill-red">Sem prémio</span>`}
+                  </div>`;
+                }
+
+                return `
+                <div class="border border-slate-700 rounded-md p-3">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-semibold text-gray-200">Sorteio ${idx+1}</span>
+                      <input type="date" class="form-input h-8 py-1 text-xs draw-date" data-week-id="${id}" data-draw-index="${idx}" value="${dr.date||''}">
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Chave sorteada -->
+                    <div>
+                      <p class="text-xs text-gray-400 mb-1">Chave <b>sorteada</b></p>
+                      <div class="grid grid-cols-7 gap-2">
+                        ${[0,1,2,3,4].map(i=>`<input type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs draw-input" data-week-id="${id}" data-draw-index="${idx}" data-draw-type="main" data-index="${i}" value="${dm[i]!==undefined?dm[i]:''}" placeholder="N${i+1}">`).join('')}
+                        ${[0,1].map(i=>`<input type="number" min="1" max="12" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs draw-input" data-week-id="${id}" data-draw-index="${idx}" data-draw-type="star" data-index="${i}" value="${ds[i]!==undefined?ds[i]:''}" placeholder="E${i+1}">`).join('')}
+                      </div>
+                      <div class="flex gap-2 mt-2">
+                        <button class="save-draw btn btn-xs btn-primary" data-week-id="${id}" data-draw-index="${idx}">Guardar sorteio</button>
+                        <button class="clear-draw btn btn-xs btn-ghost" data-week-id="${id}" data-draw-index="${idx}">Limpar</button>
+                      </div>
+                    </div>
+
+                    <!-- Chave jogada por sorteio -->
+                    <div>
+                      <p class="text-xs text-gray-400 mb-1">Chave <b>jogada neste sorteio</b></p>
+                      <div class="grid grid-cols-7 gap-2">
+                        ${[0,1,2,3,4].map(i=>`<input type="number" min="1" max="50" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs draw-played-input" data-week-id="${id}" data-draw-index="${idx}" data-type="main" data-index="${i}" value="${pm[i]!==undefined?pm[i]:''}" placeholder="N${i+1}">`).join('')}
+                        ${[0,1].map(i=>`<input type="number" min="1" max="12" inputmode="numeric" pattern="[0-9]*" class="form-input px-2 py-1 text-center text-xs draw-played-input" data-week-id="${id}" data-draw-index="${idx}" data-type="star" data-index="${i}" value="${ps[i]!==undefined?ps[i]:''}" placeholder="E${i+1}">`).join('')}
+                      </div>
+                      <div class="flex flex-wrap items-center gap-2 mt-2">
+                        <button class="save-draw-played btn btn-xs btn-primary" data-week-id="${id}" data-draw-index="${idx}">Guardar chave (sorteio)</button>
+                        <button class="replicate-week-key btn btn-xs btn-ghost" data-week-id="${id}" data-draw-index="${idx}">Replicar chave da semana</button>
+                        <button class="clear-draw-played btn btn-xs btn-ghost" data-week-id="${id}" data-draw-index="${idx}">Limpar</button>
+                      </div>
+
+                      <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span class="text-xs text-gray-400">Prémio deste sorteio (€)</span>
+                        <div class="flex">
+                          <span class="inline-flex items-center px-2 rounded-l-md border border-r-0 border-slate-700 bg-slate-700 text-gray-400 text-xs">€</span>
+                          <input type="number" step="0.01" class="form-input rounded-l-none w-28 text-sm draw-prize" placeholder="0.00" value="${(dr.prize||0).toFixed(2)}" data-week-id="${id}" data-draw-index="${idx}">
+                        </div>
+                        <button class="save-draw-prize btn btn-xs btn-primary" data-week-id="${id}" data-draw-index="${idx}">Guardar prémio</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  ${resultHTML}
+                </div>`;
+              }).join('')}
+              ${draws.length===0?'<p class="text-[11px] text-gray-500">Ainda sem sorteios. Usa “+ Adicionar 2º sorteio”.</p>':''}
+            </div>
+          </div>
+
+          <!-- Pagamentos -->
+          <div class="text-[11px] text-blue-300 mt-3 mb-2">
+            ${weekMonths.size>0?`Mensal refere-se a ${weekMonths.size===1?'ao mês <b>'+[...weekMonths][0]+'</b>':'aos meses <b>'+[...weekMonths].join(' / ')+'</b>'}.`:'Para bloquear por <b>Mensal</b>, define a(s) data(s) do(s) sorteio(s) acima.'}
+          </div>
+          <div class="payment-controls space-y-2 mb-3">
+            ${localParticipants.map(p=>{
+              const rate=(typeof p.rate==='number'?p.rate:localSummary.defaultContribution);
+              const monthlyActive=[...weekMonths].some(mk=>localSummary.monthlyPayments?.[mk]?.[p.id]);
+              const isPaidWeekly=!!d.payments[p.id];
+              const computedPaid=monthlyActive?true:isPaidWeekly;
+              const paidLabel=monthlyActive?'Pago (mensal)':(computedPaid?'Pago':'Não Pago');
+              const paidColor=monthlyActive?'text-blue-300':(computedPaid?'text-green-400':'text-red-400');
+              return `
+                <div class="flex justify-between items-center py-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-300">${p.name}</span>
+                    <span class="text-[11px] pill pill-blue">€${rate.toFixed(2)}/sem</span>
+                  </div>
+                  <label class="flex items-center ${monthlyActive?'opacity-60 cursor-not-allowed':''}" ${monthlyActive?'title="Mensal ativo — alternador desativado"':''}>
+                    <span class="mr-2 text-xs ${paidColor} font-medium">${paidLabel}</span>
+                    <div class="relative">
+                      <input type="checkbox" class="sr-only payment-toggle" data-week-id="${id}" data-participant-id="${p.id}" ${computedPaid?'checked':''} ${monthlyActive?'disabled':''}>
+                      <div class="toggle-bg bg-gray-200 border-2 h-6 w-11 rounded-full"></div>
+                    </div>
+                  </label>
+                </div>`;
+            }).join('')}
+          </div>
+
+          <div class="text-xs text-gray-400 border-t border-slate-700 border-dashed pt-2">
+            <p><b class="text-gray-300">Contribuições:</b> programado €${sumAll.toFixed(2)} · pago €${sumPaid.toFixed(2)} · em falta €${sumUnpaid.toFixed(2)}</p>
+          </div>
+
+          <button data-id="${id}" class="delete-week mt-3 text-xs text-red-500 hover:text-red-400 font-medium">Remover semana</button>
+        </div>
+      `;
+
+      // preservar estado aberto
+      (function(){
+        const idState = (openWeekIds && openWeekIds.has && openWeekIds.has(id));
+        if(idState){
+          const headerEl = container.querySelector('.accordion-header');
+          const contentEl = container.querySelector('.accordion-content');
+          const chevEl = container.querySelector('.chevron');
+          if(headerEl) headerEl.classList.add('active');
+          if(contentEl) contentEl.style.maxHeight='3000px';
+          if(chevEl) chevEl.classList.add('rotate-180');
+        }
+      })();
+      weeksListEl.appendChild(container);
+    });
+  }
+
+  function renderExtraMovements(){
+    extraMovementsListEl.innerHTML='';
+    const ms=localSummary.extraMovements||[];
+    if(ms.length===0){
+      extraMovementsListEl.innerHTML='<p class="text-xs text-gray-500">Sem movimentos.</p>'; 
+      return;
+    }
+    ms.forEach(m=>{
+      const row=document.createElement('div');
+      row.className='flex justify-between items-start py-2 text-sm';
+      const signClass=(m.amount||0)>=0?'text-green-400':'text-red-400';
+      row.innerHTML=`
+        <div>
+          <p class="font-medium text-gray-200">${m.type==='ajuste'?'Ajuste':'Prémio'}</p>
+          <p class="text-xs text-gray-400">${m.description||''}</p>
+        </div>
+        <div class="text-right">
+          <p class="font-mono ${signClass}">€${(m.amount||0).toFixed(2)}</p>
+          <button class="text-[11px] text-gray-500 hover:text-red-400 remove-movement" data-id="${m.id}">remover</button>
+        </div>`;
+      extraMovementsListEl.appendChild(row);
+    });
+  }
+
+  function renderAll(){
+    renderWeeks();
+    renderParticipants();
+    renderMonthlyPayments();
+    renderSummary();
+    renderCharts();
+    renderCash();
+    renderExtraMovements();
+  }
+
+  // Nav
+  function setActiveSection(name){
+    document.querySelectorAll('.app-section').forEach(sec => {
+      sec.id==='section-'+name ? sec.classList.remove('hidden') : sec.classList.add('hidden');
+    });
+    navButtons.forEach(btn => {
+      btn.dataset.sectionTarget===name ? btn.classList.add('nav-button-active') : btn.classList.remove('nav-button-active');
+    });
+    if(name==='charts'){ renderCharts(); }
+    if(name==='summary'){ renderSummary(); }
+  }
+  navButtons.forEach(btn=>btn.addEventListener('click',()=>setActiveSection(btn.dataset.sectionTarget)));
+
+  // Participants events
+  if(addParticipantForm){
+    addParticipantForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=(newParticipantNameInput.value||'').trim();
+      if(!name) return;
+      const p={id:crypto.randomUUID(),name,rate:localSummary.defaultContribution};
+      localParticipants.push(p);
+      localWeeks.forEach(w=>{
+        w.data=w.data||{};
+        w.data.payments=w.data.payments||{};
+        w.data.payments[p.id]=false;
+      });
+      newParticipantNameInput.value='';
+      saveAll(); renderAll(); showStatus('Participante adicionado.');
+    });
+  }
+  if(participantsListEl){
+    participantsListEl.addEventListener('click',e=>{
+      const del=e.target.closest('.delete-participant');
+      if(del){
+        const id=del.dataset.id;
+        localParticipants=localParticipants.filter(p=>p.id!==id);
+        localWeeks.forEach(w=>{ if(w.data?.payments) delete w.data.payments[id]; });
+        Object.keys(localSummary.monthlyPayments||{}).forEach(mk=>{
+          if(localSummary.monthlyPayments[mk]?.[id]) delete localSummary.monthlyPayments[mk][id];
+        });
+        saveAll(); renderAll(); showStatus('Participante removido.'); 
+        return;
+      }
+      const monthlyToggle=e.target.closest('.participant-monthly-toggle');
+      if(monthlyToggle){
+        const pid=monthlyToggle.dataset.participantId;
+        const monthInputId=monthlyToggle.dataset.monthInputId;
+        const monthInput=document.getElementById(monthInputId);
+        const mk=(monthInput?.value||'').trim();
+        if(!mk){
+          showStatus('Escolhe um mês válido.',true);
+          monthlyToggle.checked=false;
+          return;
+        }
+        localSummary.monthlyPayments=localSummary.monthlyPayments||{};
+        localSummary.monthlyPayments[mk]=localSummary.monthlyPayments[mk]||{};
+        if(monthlyToggle.checked) localSummary.monthlyPayments[mk][pid]=true;
+        else delete localSummary.monthlyPayments[mk][pid];
+        saveAll(); renderAll(); showStatus('Definição mensal atualizada.');
+      }
+    });
+    participantsListEl.addEventListener('input',e=>{
+      const rateInput=e.target.closest('.rate-input');
+      if(rateInput){
+        const id=rateInput.dataset.id;
+        let v=parseFloat((rateInput.value||'').replace(',','.'));
+        if(isNaN(v)||v<0) v=0;
+        const p=localParticipants.find(x=>x.id===id);
+        if(p){ p.rate=v; }
+        saveAll(); renderAll();
+      }
+    });
+  }
+
+  // Pagamentos Mensais matrix
+  if(monthlyPaymentsTableEl){
+    monthlyPaymentsTableEl.addEventListener('change', e => {
+      const el = e.target.closest('.mp-check');
+      if(!el) return;
+      const pid = el.getAttribute('data-part');
+      const mk = el.getAttribute('data-month');
+      localSummary.monthlyPayments = localSummary.monthlyPayments || {};
+      localSummary.monthlyPayments[mk] = localSummary.monthlyPayments[mk] || {};
+      localSummary.monthlyPayments[mk][pid] = el.checked;
+      saveAll(); renderAll(); showStatus('Pagamento mensal atualizado.');
+    });
+  }
+
+  // Caixa
+  if(setInitialCashBoxForm){
+    setInitialCashBoxForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const v=parseFloat((initialCashBoxInput.value||'').replace(',','.'));
+      if(isNaN(v)) return showStatus('Valor inválido para saldo inicial.',true);
+      localSummary.initialCashBox=v; saveAll(); renderCash(); renderSummary(); showStatus('Saldo inicial atualizado.');
+    });
+  }
+
+  // Movimentos extra
+  if(extraMovementForm){
+    extraMovementForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const type=movementTypeInput.value;
+      const description=movementDescriptionInput.value;
+      const amount=parseFloat((movementAmountInput.value||'').replace(',','.'));
+      if(isNaN(amount)) return showStatus('Valor inválido.',true);
+      localSummary.extraMovements=localSummary.extraMovements||[];
+      localSummary.extraMovements.push({id:crypto.randomUUID(),type,description,amount});
+      movementDescriptionInput.value=''; movementAmountInput.value='';
+      saveAll(); renderAll(); showStatus('Movimento registado.');
+    });
+    extraMovementsListEl.addEventListener('click',e=>{
+      const del=e.target.closest('.remove-movement');
+      if(del){
+        const id=del.dataset.id;
+        localSummary.extraMovements=(localSummary.extraMovements||[]).filter(m=>m.id!==id);
+        saveAll(); renderAll(); showStatus('Movimento removido.');
+      }
+    });
+  }
+
+  // Definições
+  if(saveDefaultContributionBtn){
+    saveDefaultContributionBtn.addEventListener('click',e=>{
+      e.preventDefault();
+      const v=parseFloat((defaultContributionInput.value||'').replace(',','.'));
+      if(isNaN(v)||v<0) return showStatus('Valor padrão inválido.',true);
+      localSummary.defaultContribution=v; saveAll(); renderAll(); showStatus('Contribuição padrão atualizada.');
+    });
+  }
+  if(settingsForm){
+    settingsForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const t=parseFloat((ticketCostInput.value||'').replace(',','.'));
+      if(isNaN(t)||t<0) return showStatus('Valor inválido para aposta semanal.',true);
+      localSummary.ticketCost=t; saveAll();
+      if(!weekCostInput.value) weekCostInput.value=t.toFixed(2);
+      renderAll(); showStatus('Definições guardadas.');
+    });
+  }
+
+  // Add/Update Week
+  if(addWeekForm){
+    addWeekForm.addEventListener('submit',e=>{
+      e.preventDefault();
+      const weekNumber=parseInt(weekNumberInput.value,10);
+      const cost=parseFloat((weekCostInput.value||'').replace(',','.'));
+      const winningsExtra=parseFloat((weekWinningsInput.value||'0').replace(',','.'))||0;
+      const drawDate=weekDrawDateInput.value;
+      if(isNaN(weekNumber)||isNaN(cost)) return showStatus('Preenche semana e custo.',true);
+
+      const main=[],stars=[];
+      ['n1','n2','n3','n4','n5','e1','e2'].forEach((id,i)=>{
+        const el=document.getElementById(id);
+        if(!el||!el.value) return;
+        const v=parseInt(el.value,10);
+        if(isNaN(v)) return;
+        (i<5?main:stars).push(v);
+      });
+      const mainSet=new Set(main), starSet=new Set(stars);
+      if(main.length!==mainSet.size){ showStatus('Números repetidos nos 5 números da chave jogada.',true); return; }
+      if(stars.length!==starSet.size){ showStatus('Números repetidos nas estrelas.',true); return; }
+
+      let w=localWeeks.find(x=>x.data.weekNumber===weekNumber);
+      if(!w){
+        w={ id:crypto.randomUUID(), data:{ weekNumber, cost, winnings:winningsExtra, numbers:{main,stars}, draws:[], payments:{}, surplusConfirmed:false } };
+        localParticipants.forEach(p=>w.data.payments[p.id]=false);
+        if(drawDate){
+          w.data.draws.push({ 
+            date:drawDate, 
+            drawnNumbers:{main:[],stars:[]}, 
+            playedNumbers:{ main:[...main], stars:[...stars] }, 
+            prize:0 
+          });
+        }
+        localWeeks.push(w);
+        showStatus('Semana criada.');
+      }else{
+        if(w.data.draws.length<2 && drawDate){
+          w.data.draws.push({ 
+            date:drawDate, 
+            drawnNumbers:{main:[],stars:[]}, 
+            playedNumbers:{ main:[...w.data.numbers.main], stars:[...w.data.numbers.stars] }, 
+            prize:0 
+          });
+          showStatus('Adicionado 2º sorteio à semana.');
+        }else if(!drawDate){
+          showStatus('Semana existente atualizada.');
+        }else{
+          showStatus('Já existem 2 sorteios nesta semana. (Atualizei outros campos.)');
+        }
+        w.data.cost=cost;
+        w.data.winnings=(w.data.winnings||0)+winningsExtra;
+        if(main.length||stars.length) w.data.numbers={main,stars};
+      }
+      saveAll(); renderAll();
+      addWeekForm.reset();
+      weekCostInput.value=localSummary.ticketCost.toFixed(2);
+      weekWinningsInput.value='0';
+    });
+  }
+
+  // Weeks interactions
+  if(weeksListEl){
+    weeksListEl.addEventListener('click',e=>{
+      const header=e.target.closest('.accordion-header');
+      if(header){
+        const container = header.closest('[data-week-id]');
+        const id = container ? container.dataset.weekId : null;
+        const content=header.nextElementSibling;
+        const chevron=header.querySelector('.chevron');
+        const active=header.classList.toggle('active');
+        content.style.maxHeight = active ? '3000px' : '0px';
+        if(chevron) chevron.classList.toggle('rotate-180');
+        if(id){
+          if(active) openWeekIds.add(id); else openWeekIds.delete(id);
+        }
+        return;
+      }
+
+      const del=e.target.closest('.delete-week');
+      if(del){
+        const id=del.dataset.id;
+        localWeeks=localWeeks.filter(w=>w.id!==id);
+        saveAll(); renderAll(); showStatus('Semana removida.'); 
+        return;
+      }
+
+      const editPlayed=e.target.closest('.edit-played');
+      if(editPlayed){
+        const id=editPlayed.dataset.weekId;
+        const editor=weeksListEl.querySelector(`[data-editor-for="${id}"]`);
+        if(editor) editor.classList.toggle('hidden');
+        return;
+      }
+      const savePlayed=e.target.closest('.save-played');
+      if(savePlayed){
+        const id=savePlayed.dataset.weekId;
+        const editor=weeksListEl.querySelector(`[data-editor-for="${id}"]`);
+        if(!editor) return;
+        const mainInputs=[...editor.querySelectorAll('.played-input[data-type="main"]')];
+        const starInputs=[...editor.querySelectorAll('.played-input[data-type="star"]')];
+        const seenMain=new Set(), seenStars=new Set();
+        for(const inp of mainInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenMain.has(v)) return showStatus('Número repetido nos 5 números.',true);
+          seenMain.add(v);
+        }
+        for(const inp of starInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenStars.has(v)) return showStatus('Número repetido nas estrelas.',true);
+          seenStars.add(v);
+        }
+        const main=[],stars=[];
+        mainInputs.forEach((inp,idx)=>{ const n=parseInt((inp.value||'').trim(),10); if(!isNaN(n)) main[idx]=n; });
+        starInputs.forEach((inp,idx)=>{ const n=parseInt((inp.value||'').trim(),10); if(!isNaN(n)) stars[idx]=n; });
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        w.data.numbers={ main: main.filter(Number.isInteger), stars: stars.filter(Number.isInteger) };
+        saveAll(); renderAll(); showStatus('Chave da semana guardada.');
+        return;
+      }
+      const cancelPlayed=e.target.closest('.cancel-played');
+      if(cancelPlayed){
+        const id=cancelPlayed.dataset.weekId;
+        const editor=weeksListEl.querySelector(`[data-editor-for="${id}"]`);
+        if(editor) editor.classList.add('hidden');
+        return;
+      }
+      const clearPlayed=e.target.closest('.clear-played');
+      if(clearPlayed){
+        const id=clearPlayed.dataset.weekId;
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        w.data.numbers={main:[],stars:[]};
+        saveAll(); renderAll(); showStatus('Chave da semana limpa.');
+        return;
+      }
+
+      const addDraw=e.target.closest('.add-draw');
+      if(addDraw){
+        const id=addDraw.dataset.weekId;
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        if(!Array.isArray(w.data.draws)) w.data.draws=[];
+        if(w.data.draws.length>=2) return showStatus('Já existem 2 sorteios nesta semana.',true);
+        w.data.draws.push({ 
+          date:'', 
+          drawnNumbers:{main:[],stars:[]}, 
+          playedNumbers:{ main:[...w.data.numbers.main], stars:[...w.data.numbers.stars] }, 
+          prize:0 
+        });
+        saveAll(); renderAll(); showStatus('Sorteio adicionado.');
+        return;
+      }
+
+      const saveDraw=e.target.closest('.save-draw');
+      if(saveDraw){
+        const id=saveDraw.dataset.weekId;
+        const idx=parseInt(saveDraw.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        const group=weeksListEl.querySelector(`[data-draws-group="${id}"]`);
+        const box=group?.children[idx]; if(!box) return;
+        const dateInput=box.querySelector('.draw-date');
+        const mainInputs=[...box.querySelectorAll('.draw-input[data-draw-type="main"]')];
+        const starInputs=[...box.querySelectorAll('.draw-input[data-draw-type="star"]')];
+        const seenMain=new Set(), seenStars=new Set();
+        for(const inp of mainInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenMain.has(v)) return showStatus('Número repetido nos 5 números do sorteio.',true);
+          seenMain.add(v);
+        }
+        for(const inp of starInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenStars.has(v)) return showStatus('Número repetido nas estrelas do sorteio.',true);
+          seenStars.add(v);
+        }
+        const main=[],stars=[];
+        mainInputs.forEach((inp,ix)=>{ const val=parseInt((inp.value||'').trim(),10); if(!isNaN(val)) main[ix]=val; });
+        starInputs.forEach((inp,ix)=>{ const val=parseInt((inp.value||'').trim(),10); if(!isNaN(val)) stars[ix]=val; });
+        const existing = w.data.draws[idx] || { playedNumbers:{main:[],stars:[]}, prize:0 };
+        w.data.draws[idx] = { 
+          date:(dateInput?.value||''), 
+          drawnNumbers:{ main: main.filter(Number.isInteger), stars: stars.filter(Number.isInteger) }, 
+          playedNumbers: existing.playedNumbers, 
+          prize: existing.prize 
+        };
+        saveAll(); renderAll(); showStatus('Sorteio guardado.');
+        return;
+      }
+
+      const saveDrawPlayed=e.target.closest('.save-draw-played');
+      if(saveDrawPlayed){
+        const id=saveDrawPlayed.dataset.weekId;
+        const idx=parseInt(saveDrawPlayed.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        const group=weeksListEl.querySelector(`[data-draws-group="${id}"]`);
+        const box=group?.children[idx]; if(!box) return;
+        const mainInputs=[...box.querySelectorAll('.draw-played-input[data-type="main"]')];
+        const starInputs=[...box.querySelectorAll('.draw-played-input[data-type="star"]')];
+        const seenMain=new Set(), seenStars=new Set();
+        for(const inp of mainInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenMain.has(v)) return showStatus('Número repetido nos 5 números da jogada.',true);
+          seenMain.add(v);
+        }
+        for(const inp of starInputs){
+          const v=(inp.value||'').trim(); if(!v) continue;
+          if(seenStars.has(v)) return showStatus('Número repetido nas estrelas da jogada.',true);
+          seenStars.add(v);
+        }
+        const main=[],stars=[];
+        mainInputs.forEach((inp,ix)=>{ const val=parseInt((inp.value||'').trim(),10); if(!isNaN(val)) main[ix]=val; });
+        starInputs.forEach((inp,ix)=>{ const val=parseInt((inp.value||'').trim(),10); if(!isNaN(val)) stars[ix]=val; });
+        if(!Array.isArray(w.data.draws)) w.data.draws=[];
+        const existing = w.data.draws[idx] || { date:'', drawnNumbers:{main:[],stars:[]}, prize:0 };
+        w.data.draws[idx] = existing;
+        w.data.draws[idx].playedNumbers = { main: main.filter(Number.isInteger), stars: stars.filter(Number.isInteger) };
+        saveAll(); renderAll(); showStatus('Chave jogada (sorteio) guardada.');
+        return;
+      }
+
+      const replicateWeekKey=e.target.closest('.replicate-week-key');
+      if(replicateWeekKey){
+        const id=replicateWeekKey.dataset.weekId;
+        const idx=parseInt(replicateWeekKey.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        const pm = { main:[...w.data.numbers.main], stars:[...w.data.numbers.stars] };
+        if(!Array.isArray(w.data.draws)) w.data.draws=[];
+        w.data.draws[idx] = w.data.draws[idx] || { date:'', drawnNumbers:{main:[],stars:[]}, playedNumbers:{main:[],stars:[]}, prize:0 };
+        w.data.draws[idx].playedNumbers = pm;
+        saveAll(); renderAll(); showStatus('Chave da semana replicada para o sorteio.');
+        return;
+      }
+
+      const clearDraw=e.target.closest('.clear-draw');
+      if(clearDraw){
+        const id=clearDraw.dataset.weekId;
+        const idx=parseInt(clearDraw.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        w.data.draws[idx].drawnNumbers = { main:[], stars:[] };
+        saveAll(); renderAll(); showStatus('Chave sorteada limpa.');
+        return;
+      }
+      const clearDrawPlayed=e.target.closest('.clear-draw-played');
+      if(clearDrawPlayed){
+        const id=clearDrawPlayed.dataset.weekId;
+        const idx=parseInt(clearDrawPlayed.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        w.data.draws[idx].playedNumbers = { main:[], stars:[] };
+        saveAll(); renderAll(); showStatus('Chave jogada (sorteio) limpa.');
+        return;
+      }
+
+      const saveDrawPrize=e.target.closest('.save-draw-prize');
+      if(saveDrawPrize){
+        const id=saveDrawPrize.dataset.weekId;
+        const idx=parseInt(saveDrawPrize.dataset.drawIndex,10);
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        const group=weeksListEl.querySelector(`[data-draws-group="${id}"]`);
+        const box=group?.children[idx]; if(!box) return;
+        const prizeInput=box.querySelector('.draw-prize');
+        let v=parseFloat((prizeInput?.value||'').replace(',','.'));
+        if(isNaN(v)) v=0;
+        if(!Array.isArray(w.data.draws)) w.data.draws=[];
+        w.data.draws[idx] = w.data.draws[idx] || { date:'', drawnNumbers:{main:[],stars:[]}, playedNumbers:{main:[],stars:[]}, prize:0 };
+        w.data.draws[idx].prize = v;
+        saveAll(); renderAll(); showStatus('Prémio do sorteio guardado.');
+        return;
+      }
+
+      const weekPay=e.target.closest('.payment-toggle');
+      if(weekPay){
+        const id=weekPay.dataset.weekId;
+        const pid=weekPay.dataset.participantId;
+        const w=localWeeks.find(x=>x.id===id); if(!w) return;
+        w.data.payments=w.data.payments||{};
+        w.data.payments[pid]=weekPay.checked;
+        saveAll(); renderCash(); renderSummary(); showStatus('Pagamento semanal atualizado.');
+        return;
+      }
+    });
+
+    weeksListEl.addEventListener('change', e => {
+      if(e.target && e.target.classList && e.target.classList.contains('payment-toggle')){
+        const input = e.target;
+        const id = input.dataset.weekId;
+        const pid = input.dataset.participantId;
+        const w = localWeeks.find(x=>x.id===id);
+        if(!w) return;
+        w.data = w.data || {};
+        w.data.payments = w.data.payments || {};
+        w.data.payments[pid] = !!input.checked;
+        saveAll(); renderWeeks(); renderCash(); renderSummary(); showStatus(input.checked ? 'Marcado como pago.' : 'Marcado como não pago.');
+      }
+    });
+  }
+
+  // Backup
+  if(exportButton){
+    exportButton.addEventListener('click',()=>{
+      const data={participants:localParticipants,weeks:localWeeks,summary:localSummary};
+      const json=JSON.stringify(data,null,2);
+      const blob=new Blob([json],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); 
+      a.href=url; 
+      a.download='euromilhoes_backup.json'; 
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+  if(importFileInput){
+    importFileInput.addEventListener('change',e=>{
+      const file=e.target.files?.[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{
+        try{
+          const data=JSON.parse(reader.result);
+          if(Array.isArray(data.participants)) localParticipants=data.participants;
+          if(Array.isArray(data.weeks)) localWeeks=data.weeks;
+          if(typeof data.summary==='object'&&data.summary) localSummary={...localSummary,...data.summary};
+          saveAll(); initLoad().then(()=>{ renderAll(); }); showStatus('Backup importado.');
+        }catch(err){ showStatus('Ficheiro inválido.',true); }
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  // Start
+  (async () => {
+    await initLoad();
+    renderAll();
+    setActiveSection('weeks');
+  })();
+});
+</script>
+</body>
+</html>
